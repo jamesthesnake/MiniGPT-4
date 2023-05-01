@@ -1,9 +1,13 @@
 # MiniGPT-4: Enhancing Vision-language Understanding with Advanced Large Language Models
-[Deyao Zhu](https://tsutikgiau.github.io/)* (On Job Market!), [Jun Chen](https://junchen14.github.io/)* (On Job Market!), [Xiaoqian Shen](https://xiaoqian-shen.github.io), Xiang Li, and Mohamed Elhoseiny. *Equal Contribution
+[Deyao Zhu](https://tsutikgiau.github.io/)* (On Job Market!), [Jun Chen](https://junchen14.github.io/)* (On Job Market!), [Xiaoqian Shen](https://xiaoqian-shen.github.io), [Xiang Li](https://xiangli.ac.cn), and [Mohamed Elhoseiny](https://www.mohamed-elhoseiny.com/). *Equal Contribution
 
 **King Abdullah University of Science and Technology**
 
-<a href='https://minigpt-4.github.io'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='MiniGPT_4.pdf'><img src='https://img.shields.io/badge/Paper-PDF-red'></a> 
+<a href='https://minigpt-4.github.io'><img src='https://img.shields.io/badge/Project-Page-Green'></a>  <a href='https://arxiv.org/abs/2304.10592'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a> <a href='https://huggingface.co/spaces/Vision-CAIR/minigpt4'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue'></a> <a href='https://huggingface.co/Vision-CAIR/MiniGPT-4'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model-blue'></a> [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OK4kYsZphwt5DXchKkzMBjYF6jnkqh4R?usp=sharing) [![YouTube](https://badges.aleen42.com/src/youtube.svg)](https://www.youtube.com/watch?v=__tftoxpBAw&feature=youtu.be)
+
+
+## News
+We now provide a pretrained MiniGPT-4 aligned with Vicuna-7B! The demo GPU memory consumption now can be as low as 12GB.
 
 
 ## Online Demo
@@ -33,8 +37,6 @@ More examples can be found in the [project page](https://minigpt-4.github.io).
 ![overview](figs/overview.png)
 
 
-
-
 ## Getting Started
 ### Installation
 
@@ -53,8 +55,9 @@ conda activate minigpt4
 **2. Prepare the pretrained Vicuna weights**
 
 The current version of MiniGPT-4 is built on the v0 versoin of Vicuna-13B.
-Please refer to their instructions [here](https://huggingface.co/lmsys/vicuna-13b-delta-v0) to obtaining the weights.
-The final weights would be in a single folder with the following structure:
+Please refer to our instruction [here](PrepareVicuna.md) 
+to prepare the Vicuna weights.
+The final weights would be in a single folder in a structure similar to the following:
 
 ```
 vicuna_weights
@@ -70,10 +73,15 @@ Then, set the path to the vicuna weight in the model config file
 
 **3. Prepare the pretrained MiniGPT-4 checkpoint**
 
-To play with our pretrained model, download the pretrained checkpoint 
-[here](https://drive.google.com/file/d/1a4zLvaiDBr-36pasffmgpvH5P7CKmpze/view?usp=share_link).
+Download the pretrained checkpoints according to the Vicuna model you prepare.
+
+|                                Checkpoint Aligned with Vicuna 13B                                |                               Checkpoint Aligned with Vicuna 7B                                |
+:------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:
+ [Downlad](https://drive.google.com/file/d/1a4zLvaiDBr-36pasffmgpvH5P7CKmpze/view?usp=share_link) | [Download](https://drive.google.com/file/d/1RY9jV0dyqLX-o38LrumkKRh6Jtaop58R/view?usp=sharing) 
+
+
 Then, set the path to the pretrained checkpoint in the evaluation config file 
-in [eval_configs/minigpt4_eval.yaml](eval_configs/minigpt4_eval.yaml#L10) at Line 10. 
+in [eval_configs/minigpt4_eval.yaml](eval_configs/minigpt4_eval.yaml#L10) at Line 11. 
 
 
 
@@ -82,9 +90,16 @@ in [eval_configs/minigpt4_eval.yaml](eval_configs/minigpt4_eval.yaml#L10) at Lin
 Try out our demo [demo.py](demo.py) on your local machine by running
 
 ```
-python demo.py --cfg-path eval_configs/minigpt4_eval.yaml
+python demo.py --cfg-path eval_configs/minigpt4_eval.yaml  --gpu-id 0
 ```
 
+To save GPU memory, Vicuna loads as 8 bit by default, with a beam search width of 1. 
+This configuration requires about 23G GPU memory for Vicuna 13B and 11.5G GPU memory for Vicuna 7B. 
+For more powerful GPUs, you can run the model
+in 16 bit by setting low_resource to False in the config file 
+[minigpt4_eval.yaml](eval_configs/minigpt4_eval.yaml) and use a larger beam search width.
+
+Thanks [@WangRongsheng](https://github.com/WangRongsheng), you can also run our code on [Colab](https://colab.research.google.com/drive/1OK4kYsZphwt5DXchKkzMBjYF6jnkqh4R?usp=sharing)
 
 
 ### Training
@@ -105,7 +120,12 @@ You can change the save path in the config file
 torchrun --nproc-per-node NUM_GPU train.py --cfg-path train_configs/minigpt4_stage1_pretrain.yaml
 ```
 
-**1. Second finetuning stage**
+A MiniGPT-4 checkpoint with only stage one training can be downloaded 
+[here (13B)](https://drive.google.com/file/d/1u9FRRBB3VovP1HxCAlpD9Lw4t4P6-Yq8/view?usp=share_link) or [here (7B)](https://drive.google.com/file/d/1HihQtCEXUyBM1i9DQbaK934wW3TZi-h5/view?usp=share_link).
+Compared to the model after stage two, this checkpoint generate incomplete and repeated sentences frequently.
+
+
+**2. Second finetuning stage**
 
 In the second stage, we use a small high quality image-text pair dataset created by ourselves
 and convert it to a conversation format to further align MiniGPT-4.
@@ -135,10 +155,11 @@ After the second stage alignment, MiniGPT-4 is able to talk about the image cohe
 
 If you're using MiniGPT-4 in your research or applications, please cite using this BibTeX:
 ```bibtex
-@misc{zhu2022minigpt4,
-      title={MiniGPT-4: Enhancing Vision-language Understanding with Advanced Large Language Models}, 
-      author={Deyao Zhu and Jun Chen and Xiaoqian Shen and xiang Li and Mohamed Elhoseiny},
-      year={2023},
+@article{zhu2023minigpt,
+  title={MiniGPT-4: Enhancing Vision-Language Understanding with Advanced Large Language Models},
+  author={Zhu, Deyao and Chen, Jun and Shen, Xiaoqian and Li, Xiang and Elhoseiny, Mohamed},
+  journal={arXiv preprint arXiv:2304.10592},
+  year={2023}
 }
 ```
 
